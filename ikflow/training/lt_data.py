@@ -18,7 +18,7 @@ class IkfLitDataset(LightningDataModule):
             assert tag in ALL_DATASET_TAGS
 
         self._robot_name = robot_name
-        self._batch_size = batch_size
+        self.batch_size = batch_size
         self._val_set_size = val_set_size
 
         # If set to True will call prepare_data() on LOCAL_RANK=0 for every node. If set to False will only call from NODE_RANK=0, LOCAL_RANK=0.
@@ -66,7 +66,7 @@ class IkfLitDataset(LightningDataModule):
     def train_dataloader(self):
         return DataLoader(
             torch.utils.data.TensorDataset(self._samples_tr, self._endpoints_tr),
-            batch_size=self._batch_size,
+            batch_size=self.batch_size,
             shuffle=True,
             drop_last=True,
             # see https://github.com/dbolya/yolact/issues/664#issuecomment-975051339

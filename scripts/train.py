@@ -5,6 +5,7 @@ from jrl.robots import get_robot, Robot
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.trainer import Trainer
+from pytorch_lightning.tuner.tuning import Tuner
 
 # sets seeds for numpy, torch, python.random and PYTHONHASHSEED.
 from pytorch_lightning import Trainer, seed_everything
@@ -51,7 +52,7 @@ DEFAULT_GRADIENT_CLIP_VAL = 1
 
 
 # Logging stats
-DEFAULT_EVAL_EVERY = 20000
+DEFAULT_EVAL_EVERY = 2000
 DEFAULT_VAL_SET_SIZE = 500
 DEFAULT_LOG_EVERY = 20000
 DEFAULT_CHECKPOINT_EVERY = 250000
@@ -185,7 +186,7 @@ if __name__ == "__main__":
     print()
     print(base_hparams)
 
-    torch.autograd.set_detect_anomaly(False)
+    torch.autograd.set_detect_anomaly(True)
     data_module = IkfLitDataset(robot.name, args.batch_size, args.val_set_size, args.dataset_tags)
 
     # Setup wandb logging
@@ -251,5 +252,8 @@ if __name__ == "__main__":
         log_every_n_steps=args.log_every,
         max_epochs=DEFAULT_MAX_EPOCHS,
         enable_progress_bar=False if (os.getenv("IS_SLURM") is not None) or args.disable_progress_bar else True,
+        gradient_clip_val=args.gradient_clip_val,
+        # auto_scale_batch_size="power",
     )
+    # trainer.tune(model, data_module)
     trainer.fit(model, data_module)
