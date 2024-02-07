@@ -7,9 +7,10 @@ import torch
 from jrl.config import DEVICE as device
 
 # device = "cpu"
-
+GPU_IDX = torch.cuda.current_device()
 
 DEFAULT_TORCH_DTYPE = torch.float32
+torch.set_float32_matmul_precision('medium') # use "high" for more precision
 print(f"ikflow/config.py | Using device: '{device}'")
 
 # ~/.cache/ikflow/
