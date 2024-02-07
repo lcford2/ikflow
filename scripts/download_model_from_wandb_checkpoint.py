@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # Note: WandB saves artifacts by the run ID (i.e. '34c2gimi') not the run name ('dashing-forest-33'). This is
     # slightly annoying because you need to click on a run to get its ID.
-    parser.add_argument("--wandb_run_id", type=str, help="The run ID of the wandb run to load. Example: '34c2gimi'")
+    parser.add_argument("wandb_run_id", type=str, help="The run ID of the wandb run to load. Example: '34c2gimi'")
     parser.add_argument("--disable_progress_bar", action="store_true")
     args = parser.parse_args()
 
