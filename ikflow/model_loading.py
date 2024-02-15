@@ -72,6 +72,7 @@ def get_ik_solver(model_name: str, robot: Optional[Robot] = None) -> Tuple[IKFlo
     assert isinstance(hparams, dict), f"model_hyperparameters must be a Dict, got {type(hparams)}"
 
     model_weights_filepath = download_model(model_weights_url)
+    print(model_weights_filepath)
     assert os.path.isfile(
         model_weights_filepath
     ), f"File '{model_weights_filepath}' was not found. Unable to load model weights"
@@ -83,6 +84,9 @@ def get_ik_solver(model_name: str, robot: Optional[Robot] = None) -> Tuple[IKFlo
     # Build IKFlowSolver and set weights
     hyper_parameters = IkflowModelParameters()
     hyper_parameters.__dict__.update(hparams)
+    # import pickle
+    # with open("model_hparams.pkl", "rb") as f:
+    #     hyper_parameters = pickle.load(f)
     ik_solver = IKFlowSolver(hyper_parameters, robot)
     ik_solver.load_state_dict(model_weights_filepath)
     return ik_solver, hyper_parameters

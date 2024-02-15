@@ -192,15 +192,18 @@ class IKFlowSolver:
 
             # Get conditional
             if y.numel() == 7:
-                conditional = torch.cat(
-                    [y.expand((n, 7)), torch.zeros((n, 1), dtype=DEFAULT_TORCH_DTYPE, device=device)], dim=1
-                )
+                # conditional = torch.cat(
+                #     [y.expand((n, 7)), torch.zeros((n, 1), dtype=DEFAULT_TORCH_DTYPE, device=device)], dim=1
+                # )
+                conditional = y.expand((n, 7))
             else:
-                conditional = torch.cat([y, torch.zeros((n, 1), dtype=DEFAULT_TORCH_DTYPE, device=device)], dim=1)
+                # conditional = torch.cat([y, torch.zeros((n, 1), dtype=DEFAULT_TORCH_DTYPE, device=device)], dim=1)
+                conditional = y
 
             # Get latent
             if latent is None:
                 latent = draw_latent(latent_distribution, latent_scale, (n, self._network_width), device)
+            conditional = conditional.to(dtype=latent.dtype, device=device)
             return self._run_inference(latent, conditional, t0, clamp_to_joint_limits, return_detailed)
 
     def _calculate_pose_error(self, qs: torch.Tensor, target_poses: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -277,9 +280,12 @@ class IKFlowSolver:
             conditional = torch.cat(
                 [target_poses, torch.zeros((n, 1), dtype=DEFAULT_TORCH_DTYPE, device=device)], dim=1
             )
+            latent = draw_latent(latent_distribution, latent_scale, (n_tiled, self._network_width), device)
+            conditional = conditional.to(dtype=latent.dtype, device=device)
+
             conditional_tiled = conditional.repeat((repeat_count, 1))
             target_poses_tiled = conditional_tiled[:, 0:7]
-            latent = draw_latent(latent_distribution, latent_scale, (n_tiled, self._network_width), device)
+
             q = self._run_inference(latent, conditional_tiled, t0, True, False)
             t_ikf += time() - t01
 
@@ -424,7 +430,7 @@ class IKFlowSolver:
         """Set the nn_models state_dict"""
         with open(state_dict_filename, "rb") as f:
             try:
-                self.nn_model.load_state_dict(pickle.load(f))
+                self.nn_model.load_state_dict(pickle.load(f), strict=True)
             except pickle.UnpicklingError as e:
                 print(f"Error loading state dict from {state_dict_filename}: {e}")
                 raise e

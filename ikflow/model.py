@@ -169,7 +169,9 @@ class IkFlowFixedLinearTransform(InvertibleModule):
           M: Square, invertible matrix, with which each input is multiplied. Shape ``(d, d)``.
           b: Optional vector which is added element-wise. Shape ``(d,)``.
         """
-        super().__init__(dims_in, dims_c)
+        # import ipdb
+        # ipdb.set_trace()
+        super().__init__(dims_in, dims_c if dims_c else [])
 
         # TODO: it should be possible to give conditioning instead of M, so that the condition
         # provides M and b on each forward pass.
@@ -276,7 +278,7 @@ def get_pre_sigmoid_scaling_node(ndim_tot: int, robot: Robot, nodes: List[Ff.Nod
 
     # Return an direct implementation for unit testing
     node_impl = IkFlowFixedLinearTransform(
-        [ndim_tot], M=M_scaling, b=M_offset, joint_limits=robot.actuated_joints_limits
+        [(ndim_tot,)], M=M_scaling, b=M_offset, joint_limits=robot.actuated_joints_limits
     )
     return (
         Ff.Node(
@@ -300,6 +302,7 @@ def glow_cNF_model(params: IkflowModelParameters, robot: Robot, dim_cond: int, n
     input_node = Ff.InputNode(ndim_tot, name="input")
     nodes = [input_node]
     cond = Ff.ConditionNode(dim_cond)
+    print(dim_cond, ndim_tot)
 
     if params.sigmoid_on_output:
         # First map x from joint space to [0, 1]

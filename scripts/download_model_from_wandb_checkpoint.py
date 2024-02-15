@@ -3,6 +3,7 @@ import argparse
 import os
 from time import time
 import pickle
+import pathlib
 
 import wandb
 import torch
@@ -25,6 +26,7 @@ def format_state_dict(state_dict: Dict) -> Dict:
         assert k[0:len_prefix] == bad_prefix
         k_new = k[len_prefix:]
         updated[k_new] = v
+    assert len(updated) == len(state_dict)
     return updated
 
 
@@ -32,7 +34,7 @@ def format_state_dict(state_dict: Dict) -> Dict:
 _____________
 Example usage
 
-python scripts/download_model_from_wandb_checkpoint.py --wandb_run_id=2uidt835
+python scripts/download_model_from_wandb_checkpoint.py 2uidt835
 """
 
 if __name__ == "__main__":
@@ -50,16 +52,18 @@ if __name__ == "__main__":
     artifact = api.artifact(f"{wandb_entity}/{wandb_project}/model-{args.wandb_run_id}:best_k")
     download_dir = artifact.download()
     print(f"Downloaded artifact in {round(time()- t0, 2)}s")
-
+    
     t0 = time()
     run = api.run(f"/{wandb_entity}/{wandb_project}/runs/{args.wandb_run_id}")
     print(f"Downloaded run data in {round(time()- t0, 2)}s")
 
     run_name = run.name
     robot_name = run.config["robot"]
+    # download_dir = pathlib.Path(__file__).parent / "../artifacts/model-n7j0qj1p:v466"
     ckpt_filepath = os.path.join(download_dir, "model.ckpt")
     checkpoint = torch.load(ckpt_filepath, map_location=lambda storage, loc: storage)
     state_dict = format_state_dict(checkpoint["state_dict"])
+    # state_dict = checkpoint["state_dict"]
     global_step = str(checkpoint["global_step"] / 1e6) + "M"
 
     # Save model's state_dict

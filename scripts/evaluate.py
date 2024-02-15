@@ -10,6 +10,7 @@ import numpy as np
 from jrl.robots import Robot
 import pandas as pd
 
+from ikflow.config import DEFAULT_TORCH_DTYPE, device
 from ikflow.ikflow_solver import IKFlowSolver
 from ikflow.utils import set_seed, boolean_string
 from ikflow.model_loading import get_ik_solver, get_all_model_names
@@ -64,7 +65,7 @@ def calculate_error_stats(
         for i in range(testset.shape[0]):
             ee_pose_target = testset[i]
             samples = ik_solver.generate_ik_solutions(
-                ee_pose_target,
+                torch.tensor(ee_pose_target),
                 samples_per_pose,
                 latent_distribution=latent_distribution,
                 latent_scale=latent_scale,
@@ -100,6 +101,7 @@ def calculate_runtime_stats(ik_solver: IKFlowSolver, n_solutions: int, k: int, r
             target_poses = poses[k_i * n_solutions : (k_i + 1) * n_solutions]
             assert target_poses.shape == (n_solutions, 7)
             t0 = time()
+            target_poses = torch.tensor(target_poses, dtype=DEFAULT_TORCH_DTYPE, device=device)
             ik_solver.generate_ik_solutions(target_poses, None, refine_solutions=refine_solutions)[1]
             sample_times.append(time() - t0)
     return RuntimeStats(np.mean(sample_times) * 1000, np.std(sample_times), n_solutions)

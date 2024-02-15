@@ -45,7 +45,7 @@ DEFAULT_SIGMOID_ON_OUTPUT = False
 DEFAULT_OPTIMIZER = "adamw"
 DEFAULT_LR = 1e-4
 DEFAULT_BATCH_SIZE = 512
-DEFAULT_N_EPOCHS = 100
+DEFAULT_N_EPOCHS = 10
 DEFAULT_GAMMA = 0.9794578299341784
 DEFAULT_STEP_LR_EVERY = int(int(2.5 * 1e6) / 64)
 DEFAULT_GRADIENT_CLIP_VAL = 1
@@ -186,6 +186,10 @@ if __name__ == "__main__":
     print()
     print(base_hparams)
 
+    import pickle
+    with open("model_hparams.pkl", "wb") as f:
+        pickle.dump(base_hparams, f)
+
     torch.autograd.set_detect_anomaly(True)
     data_module = IkfLitDataset(robot.name, args.batch_size, args.val_set_size, args.dataset_tags)
 
@@ -232,8 +236,10 @@ if __name__ == "__main__":
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=checkpoint_directory,
-        every_n_train_steps=args.checkpoint_every,
-        save_on_train_epoch_end=False,
+        every_n_epochs=1,
+        save_on_train_epoch_end=True,
+        # every_n_train_steps=args.checkpoint_every,
+        # save_on_train_epoch_end=False,
         # Save the last 3 checkpoints. Checkpoint files are logged as wandb artifacts so it doesn't really matter anyway
         save_top_k=3,
         monitor="global_step",
@@ -250,10 +256,11 @@ if __name__ == "__main__":
         devices=[GPU_IDX],
         accelerator="gpu",
         log_every_n_steps=args.log_every,
-        max_epochs=DEFAULT_MAX_EPOCHS,
+        max_epochs=min([args.n_epochs, DEFAULT_MAX_EPOCHS]),
+        detect_anomaly=True,
         enable_progress_bar=False if (os.getenv("IS_SLURM") is not None) or args.disable_progress_bar else True,
         gradient_clip_val=args.gradient_clip_val,
-        # auto_scale_batch_size="power",
+        # auto_scale_batch_size="binsearch",
     )
     # trainer.tune(model, data_module)
     trainer.fit(model, data_module)
